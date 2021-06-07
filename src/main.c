@@ -4,7 +4,7 @@
 
 #define APP_ID "io.github.misterabdul.kbbi-gtk"
 #define WINDOW_TITLE "KBBI Offline"
-#define WINDOW_WIDTH 400
+#define WINDOW_WIDTH 500
 #define WINDOW_HEIGHT 400
 
 static void

@@ -2,14 +2,6 @@
 
 #include "ui.h"
 
-enum
-{
-  TITLE_COLUMN,
-  AUTHOR_COLUMN,
-  CHECKED_COLUMN,
-  N_COLUMNS
-};
-
 GtkWidget*
 initRootContainer(const GApplication* app,
                   const char* title,
@@ -39,7 +31,7 @@ initScrolledWindowContainer()
 {
   GtkWidget* scrolledWindowContainer = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_min_content_width(
-    GTK_SCROLLED_WINDOW(scrolledWindowContainer), 300);
+    GTK_SCROLLED_WINDOW(scrolledWindowContainer), 200);
   return scrolledWindowContainer;
 }
 
@@ -56,43 +48,26 @@ initSearchInput(void)
 GtkWidget*
 initListView(void)
 {
-  GtkTreeStore* store;
+  enum columns
+  {
+    wordColumn,
+    columnCount
+  };
 
-  store =
-    gtk_tree_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
-
+  GtkTreeStore* store = gtk_tree_store_new(columnCount, G_TYPE_STRING);
   GtkTreeIter iter;
   for (int i = 0; i < 100; i++) {
     gtk_tree_store_append(store, &iter, NULL);
-    gtk_tree_store_set(store,
-                       &iter,
-                       TITLE_COLUMN,
-                       "The Art of Computer Programming",
-                       AUTHOR_COLUMN,
-                       "Donald E. Knuth",
-                       CHECKED_COLUMN,
-                       FALSE,
-                       -1);
+    gtk_tree_store_set(store, &iter, wordColumn, "lorem", -1);
   }
+
   GtkWidget* tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
-  g_object_unref(G_OBJECT(store));
-
   GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
-  g_object_set(G_OBJECT(renderer), "foreground", "red", NULL);
-
   GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
-    "Author", renderer, "text", AUTHOR_COLUMN, NULL);
-  gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+    "Words", renderer, "text", wordColumn, NULL);
 
-  renderer = gtk_cell_renderer_text_new();
-  column = gtk_tree_view_column_new_with_attributes(
-    "Title", renderer, "text", TITLE_COLUMN, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
-
-  renderer = gtk_cell_renderer_toggle_new();
-  column = gtk_tree_view_column_new_with_attributes(
-    "Checked out", renderer, "active", CHECKED_COLUMN, NULL);
-  gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+  g_object_unref(G_OBJECT(store));
 
   return tree;
 }
