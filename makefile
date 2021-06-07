@@ -4,7 +4,7 @@ SRCDIR := src
 OBJDIR := obj
 BINDIR := bin
 
-PKG_CFG_GTK4 := $(shell pkg-config --cflags --libs gtk4)
+PKG_CFG_GTK4 := $(shell pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0)
 
 CFLAGS ?= -Wall -Wextra -g
 
