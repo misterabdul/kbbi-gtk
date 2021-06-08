@@ -8,6 +8,11 @@
 #define WINDOW_WIDTH 500
 #define WINDOW_HEIGHT 400
 
+void onSearchButtonClicked(char* query)
+{
+  printf("%s\n", query);
+}
+
 void onListViewItemClicked(char* word)
 {
   printf("%s\n", word);
@@ -18,6 +23,7 @@ on_activate(GApplication* app, gpointer user_data)
 {
   UI_Manipulable manipulableWidgets =
     UI_initWindow(app, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
+  UI_onSearchButtonClicked(manipulableWidgets, onSearchButtonClicked);
   UI_onListViewItemClicked(manipulableWidgets, onListViewItemClicked);
 }
 

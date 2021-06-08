@@ -324,10 +324,35 @@ UI_initWindow(const GApplication* app,
 
   UI_Manipulable manipulableWidgets = malloc(sizeof(struct _ui_manipulable));
   manipulableWidgets->searchInput = searchInput;
+  manipulableWidgets->searchButton = searchButton;
   manipulableWidgets->listView = listView;
   manipulableWidgets->webView = webView;
 
   return manipulableWidgets;
+}
+
+void (*searchButtonCallback)(char*) = NULL;
+
+void
+searchButtonOnClicked(GtkButton* button, gpointer user_data)
+{
+  GtkSearchEntry* input = (GtkSearchEntry*)user_data;
+  char* searchQuery = gtk_entry_get_text(GTK_ENTRY(input));
+
+  if (searchButtonCallback)
+    searchButtonCallback(searchQuery);
+}
+
+void
+UI_onSearchButtonClicked(const UI_Manipulable manipulableWidgets,
+                         const void (*handler)(char*))
+{
+  searchButtonCallback = handler;
+
+  g_signal_connect(manipulableWidgets->searchButton,
+                   "clicked",
+                   G_CALLBACK(searchButtonOnClicked),
+                   manipulableWidgets->searchInput);
 }
 
 void (*treeViewCallback)(char*);
@@ -347,7 +372,7 @@ treeSelectionOnChanged(GtkTreeSelection* selection, gpointer user_data)
 
 void
 UI_onListViewItemClicked(const UI_Manipulable manipulableWidgets,
-                         void (*handler)(char*))
+                         const void (*handler)(char*))
 {
   treeViewCallback = handler;
   GtkTreeSelection* selection =

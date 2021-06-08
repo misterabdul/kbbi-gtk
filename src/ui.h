@@ -7,6 +7,7 @@
 typedef struct _ui_manipulable
 {
   GtkWidget* searchInput;
+  GtkWidget* searchButton;
   GtkWidget* listView;
   GtkWidget* webView;
 } * UI_Manipulable;
@@ -18,7 +19,11 @@ UI_initWindow(const GApplication* app,
               const int height);
 
 void
+UI_onSearchButtonClicked(const UI_Manipulable manipulableWidgets,
+                         const void (*handler)(char*));
+
+void
 UI_onListViewItemClicked(const UI_Manipulable manipulableWidgets,
-                         void (*handler)(char*));
+                         const void (*handler)(char*));
 
 #endif
