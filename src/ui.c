@@ -27,6 +27,15 @@ initGridContainer(void)
 }
 
 GtkWidget*
+initSearchContainer(void)
+{
+  GtkWidget* searchContainer = gtk_grid_new();
+  gtk_grid_insert_column(GTK_GRID(searchContainer), 1);
+
+  return searchContainer;
+}
+
+GtkWidget*
 initScrolledWindowContainer()
 {
   GtkWidget* scrolledWindowContainer = gtk_scrolled_window_new(NULL, NULL);
@@ -43,6 +52,15 @@ initSearchInput(void)
   gtk_widget_set_hexpand(searchInput, TRUE);
 
   return searchInput;
+}
+
+GtkWidget*
+initSearchButton(void)
+{
+  GtkWidget* searchButton = gtk_button_new();
+  gtk_button_set_label(GTK_BUTTON(searchButton), "Cari");
+
+  return searchButton;
 }
 
 GtkWidget*
@@ -283,14 +301,20 @@ UI_initWindow(const GApplication* app,
 {
   GtkWidget* rootContainer = initRootContainer(app, title, width, height);
   GtkWidget* gridContainer = initGridContainer();
+  GtkWidget* searchContainer = initSearchContainer();
   GtkWidget* scrolledWindowContainer = initScrolledWindowContainer();
+
   GtkWidget* searchInput = initSearchInput();
+  GtkWidget* searchButton = initSearchButton();
   GtkWidget* listView = initListView();
   GtkWidget* webView = initWebView();
 
   gtk_container_add(GTK_CONTAINER(scrolledWindowContainer), listView);
 
-  gtk_grid_attach(GTK_GRID(gridContainer), searchInput, 0, 0, 2, 1);
+  gtk_grid_attach(GTK_GRID(searchContainer), searchInput, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(searchContainer), searchButton, 1, 0, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(gridContainer), searchContainer, 0, 0, 2, 1);
   gtk_grid_attach(GTK_GRID(gridContainer), scrolledWindowContainer, 0, 1, 1, 1);
   gtk_grid_attach(GTK_GRID(gridContainer), webView, 1, 1, 1, 1);
 
@@ -328,7 +352,8 @@ UI_onListViewItemClicked(const UI_Manipulable manipulableWidgets,
   treeViewCallback = handler;
   GtkTreeSelection* selection =
     gtk_tree_view_get_selection(GTK_TREE_VIEW(manipulableWidgets->listView));
-  GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(manipulableWidgets->listView));
+  GtkTreeModel* model =
+    gtk_tree_view_get_model(GTK_TREE_VIEW(manipulableWidgets->listView));
   g_signal_connect(
     selection, "changed", G_CALLBACK(treeSelectionOnChanged), model);
 }
