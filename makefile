@@ -18,6 +18,10 @@ BIN_OBJS := $(subst $(SRCDIR)/,$(SRCDIR)_,$(BIN_SRCS:%=$(OBJDIR)/%.o))
 
 all: $(BINDIR)/$(BIN) $(BINDIR)/$(LIB_KBBI).so
 
+clean:
+	@$(RM) -rf bin/*
+	@$(RM) -rf obj/*
+
 # Link all the objects to create main binary
 $(BINDIR)/$(BIN): $(BIN_OBJS)
 	@echo LINK $(BIN)
