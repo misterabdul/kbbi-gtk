@@ -48,26 +48,35 @@ initSearchInput(void)
 GtkWidget*
 initListView(void)
 {
-  enum columns
+  enum ListViewColumns
   {
-    wordColumn,
-    columnCount
+    LV_WordColumn,
+    LV_ColumnCount
   };
 
-  GtkTreeStore* store = gtk_tree_store_new(columnCount, G_TYPE_STRING);
+  GtkTreeStore* store = gtk_tree_store_new(LV_ColumnCount, G_TYPE_STRING);
   GtkTreeIter iter;
   for (int i = 0; i < 100; i++) {
     gtk_tree_store_append(store, &iter, NULL);
-    gtk_tree_store_set(store, &iter, wordColumn, "lorem", -1);
+    gtk_tree_store_set(store, &iter, LV_WordColumn, "lorem", -1);
   }
 
   GtkWidget* tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
   GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
   GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
-    "Words", renderer, "text", wordColumn, NULL);
+    "Words", renderer, "text", LV_WordColumn, NULL);
 
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), FALSE);
+  gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tree), FALSE);
+  gtk_tree_view_set_enable_tree_lines(GTK_TREE_VIEW(tree), FALSE);
+  gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tree), FALSE);
   g_object_unref(G_OBJECT(store));
+
+  GtkTreeSelection* selection =
+    gtk_tree_view_get_selection(GTK_TREE_VIEW(tree));
+  gtk_tree_selection_set_mode(GTK_TREE_SELECTION(selection),
+                              GTK_SELECTION_SINGLE);
 
   return tree;
 }
@@ -295,4 +304,31 @@ UI_initWindow(const GApplication* app,
   manipulableWidgets->webView = webView;
 
   return manipulableWidgets;
+}
+
+void (*treeViewCallback)(char*);
+
+void
+treeSelectionOnChanged(GtkTreeSelection* selection, gpointer user_data)
+{
+  GtkTreeModel* model = (GtkTreeModel*)user_data;
+  GtkTreeIter iter;
+  char* word;
+
+  gtk_tree_selection_get_selected(selection, &model, &iter);
+  gtk_tree_model_get(model, &iter, 0, &word, -1);
+
+  treeViewCallback(word);
+}
+
+void
+UI_onListViewItemClicked(const UI_Manipulable manipulableWidgets,
+                         void (*handler)(char*))
+{
+  treeViewCallback = handler;
+  GtkTreeSelection* selection =
+    gtk_tree_view_get_selection(GTK_TREE_VIEW(manipulableWidgets->listView));
+  GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(manipulableWidgets->listView));
+  g_signal_connect(
+    selection, "changed", G_CALLBACK(treeSelectionOnChanged), model);
 }

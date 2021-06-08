@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <stdio.h>
 
 #include "ui.h"
 
@@ -7,11 +8,17 @@
 #define WINDOW_WIDTH 500
 #define WINDOW_HEIGHT 400
 
+void onListViewItemClicked(char* word)
+{
+  printf("%s\n", word);
+}
+
 static void
 on_activate(GApplication* app, gpointer user_data)
 {
   UI_Manipulable manipulableWidgets =
     UI_initWindow(app, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
+  UI_onListViewItemClicked(manipulableWidgets, onListViewItemClicked);
 }
 
 int

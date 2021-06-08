@@ -17,4 +17,8 @@ UI_initWindow(const GApplication* app,
               const int width,
               const int height);
 
+void
+UI_onListViewItemClicked(const UI_Manipulable manipulableWidgets,
+                         void (*handler)(char*));
+
 #endif
