@@ -7,7 +7,7 @@ LIBDIR := lib
 
 LIB_KBBI := libkbbi
 
-PKG_CFG_GTK4 := $(shell pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0)
+PKG_CFG_GTK4 := $(shell pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0) -ldl
 
 CFLAGS ?= -Wall -Wextra -g
 

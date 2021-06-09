@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "lib.h"
 #include "ui.h"
 
 #define APP_ID "io.github.misterabdul.kbbi-gtk"
@@ -7,13 +8,12 @@
 #define WINDOW_WIDTH 500
 #define WINDOW_HEIGHT 400
 
-UI ui;
+#define LIB_KBBI_SO_PATH "./libkbbi.so"
 
 void
 onSearchButtonClicked(char* query)
 {
   printf("%s\n", query);
-  UI_showDialog(ui, "Entah", query);
 }
 
 void
@@ -25,6 +25,11 @@ onListViewItemClicked(char* word)
 void
 onAppRunning(UI ui)
 {
+  Lib lib = NULL;
+  int isLoaded = Lib_load(&lib, LIB_KBBI_SO_PATH);
+  if (!isLoaded)
+    UI_showDialog(ui, "Kesalahan", "Tidak dapat memuat file \"libkbbi.so\"");
+
   UI_onListViewItemClicked(ui, onListViewItemClicked);
   UI_onSearchButtonClicked(ui, onSearchButtonClicked);
 }
@@ -32,7 +37,7 @@ onAppRunning(UI ui)
 int
 main(int argc, char** argv)
 {
-  ui = UI_init(APP_ID, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
+  UI ui = UI_init(APP_ID, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
 
   int status = UI_run(ui, argc, argv, onAppRunning);
 
