@@ -1,29 +1,27 @@
 #ifndef _UI_H
 #define _UI_H
 
-#include <gtk/gtk.h>
-#include <webkitgtk-4.0/webkit2/webkit2.h>
-
-typedef struct _ui_manipulable
+typedef struct _ui
 {
-  GtkWidget* searchInput;
-  GtkWidget* searchButton;
-  GtkWidget* listView;
-  GtkWidget* webView;
-} * UI_Manipulable;
+  void* private;
+} * UI;
 
-UI_Manipulable
-UI_initWindow(const GApplication* app,
-              const char* title,
-              const int width,
-              const int height);
+UI
+UI_init(const char* appId,
+        const char* title,
+        const int width,
+        const int height);
 
-void
-UI_onSearchButtonClicked(const UI_Manipulable manipulableWidgets,
-                         const void (*handler)(char*));
+int
+UI_run(UI ui, int argc, char** argv, const void (*onAppRunning)(UI));
 
 void
-UI_onListViewItemClicked(const UI_Manipulable manipulableWidgets,
-                         const void (*handler)(char*));
+UI_destroy(UI* ui);
+
+void
+UI_onSearchButtonClicked(const UI ui, const void (*handler)(char*));
+
+void
+UI_onListViewItemClicked(const UI ui, const void (*handler)(char*));
 
 #endif

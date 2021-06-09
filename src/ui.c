@@ -1,9 +1,31 @@
+#include <gtk/gtk.h>
 #include <stdlib.h>
+#include <webkitgtk-4.0/webkit2/webkit2.h>
 
 #include "ui.h"
 
+typedef struct _private
+{
+  char* appId;
+  char* title;
+  int initialWidth;
+  int initialHeight;
+
+  GtkApplication* app;
+
+  GtkWidget* rootContainer;
+  GtkWidget* gridContainer;
+  GtkWidget* searchContainer;
+  GtkWidget* scrollContainer;
+
+  GtkWidget* searchInput;
+  GtkWidget* searchButton;
+  GtkWidget* listView;
+  GtkWidget* webView;
+} * Private;
+
 GtkWidget*
-initRootContainer(const GApplication* app,
+initRootContainer(const GtkApplication* app,
                   const char* title,
                   int width,
                   int height)
@@ -36,7 +58,7 @@ initSearchContainer(void)
 }
 
 GtkWidget*
-initScrolledWindowContainer()
+initScrollContainer(void)
 {
   GtkWidget* scrolledWindowContainer = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_min_content_width(
@@ -293,74 +315,160 @@ initWebView()
   return webView;
 }
 
-UI_Manipulable
-UI_initWindow(const GApplication* app,
-              const char* title,
-              const int width,
-              const int height)
+void (*appOnRunningHandler)(UI);
+
+void
+onAppActivated(GtkApplication* app, gpointer userData)
 {
-  GtkWidget* rootContainer = initRootContainer(app, title, width, height);
-  GtkWidget* gridContainer = initGridContainer();
-  GtkWidget* searchContainer = initSearchContainer();
-  GtkWidget* scrolledWindowContainer = initScrolledWindowContainer();
+  UI uiInstance = (UI)userData;
+  Private uiPrivateInstance = (Private)uiInstance->private;
 
-  GtkWidget* searchInput = initSearchInput();
-  GtkWidget* searchButton = initSearchButton();
-  GtkWidget* listView = initListView();
-  GtkWidget* webView = initWebView();
+  uiPrivateInstance->rootContainer =
+    initRootContainer(app,
+                      uiPrivateInstance->title,
+                      uiPrivateInstance->initialWidth,
+                      uiPrivateInstance->initialHeight);
 
-  gtk_container_add(GTK_CONTAINER(scrolledWindowContainer), listView);
+  uiPrivateInstance->gridContainer = initGridContainer();
+  uiPrivateInstance->searchContainer = initSearchContainer();
+  uiPrivateInstance->scrollContainer = initScrollContainer();
 
-  gtk_grid_attach(GTK_GRID(searchContainer), searchInput, 0, 0, 1, 1);
-  gtk_grid_attach(GTK_GRID(searchContainer), searchButton, 1, 0, 1, 1);
+  uiPrivateInstance->searchInput = initSearchInput();
+  uiPrivateInstance->searchButton = initSearchButton();
+  uiPrivateInstance->listView = initListView();
+  uiPrivateInstance->webView = initWebView();
 
-  gtk_grid_attach(GTK_GRID(gridContainer), searchContainer, 0, 0, 2, 1);
-  gtk_grid_attach(GTK_GRID(gridContainer), scrolledWindowContainer, 0, 1, 1, 1);
-  gtk_grid_attach(GTK_GRID(gridContainer), webView, 1, 1, 1, 1);
+  gtk_container_add(GTK_CONTAINER(uiPrivateInstance->scrollContainer),
+                    uiPrivateInstance->listView);
 
-  gtk_container_add(GTK_CONTAINER(rootContainer), gridContainer);
+  gtk_grid_attach(GTK_GRID(uiPrivateInstance->searchContainer),
+                  uiPrivateInstance->searchInput,
+                  0,
+                  0,
+                  1,
+                  1);
+  gtk_grid_attach(GTK_GRID(uiPrivateInstance->searchContainer),
+                  uiPrivateInstance->searchButton,
+                  1,
+                  0,
+                  1,
+                  1);
 
-  gtk_widget_show_all(rootContainer);
+  gtk_grid_attach(GTK_GRID(uiPrivateInstance->gridContainer),
+                  uiPrivateInstance->searchContainer,
+                  0,
+                  0,
+                  2,
+                  1);
+  gtk_grid_attach(GTK_GRID(uiPrivateInstance->gridContainer),
+                  uiPrivateInstance->scrollContainer,
+                  0,
+                  1,
+                  1,
+                  1);
+  gtk_grid_attach(GTK_GRID(uiPrivateInstance->gridContainer),
+                  uiPrivateInstance->webView,
+                  1,
+                  1,
+                  1,
+                  1);
 
-  UI_Manipulable manipulableWidgets = malloc(sizeof(struct _ui_manipulable));
-  manipulableWidgets->searchInput = searchInput;
-  manipulableWidgets->searchButton = searchButton;
-  manipulableWidgets->listView = listView;
-  manipulableWidgets->webView = webView;
+  gtk_container_add(GTK_CONTAINER(uiPrivateInstance->rootContainer),
+                    uiPrivateInstance->gridContainer);
 
-  return manipulableWidgets;
+  gtk_widget_show_all(uiPrivateInstance->rootContainer);
+
+  if (appOnRunningHandler)
+    appOnRunningHandler(uiInstance);
+}
+
+UI
+UI_init(const char* appId, const char* title, const int width, const int height)
+{
+  Private uiPrivateInstance = malloc(sizeof(struct _private));
+  uiPrivateInstance->appId = appId;
+  uiPrivateInstance->title = title;
+  uiPrivateInstance->initialWidth = width;
+  uiPrivateInstance->initialHeight = height;
+  uiPrivateInstance->rootContainer = NULL;
+  uiPrivateInstance->gridContainer = NULL;
+  uiPrivateInstance->searchContainer = NULL;
+  uiPrivateInstance->scrollContainer = NULL;
+
+  uiPrivateInstance->searchInput = NULL;
+  uiPrivateInstance->searchButton = NULL;
+  uiPrivateInstance->listView = NULL;
+  uiPrivateInstance->webView = NULL;
+
+  uiPrivateInstance->app = gtk_application_new(appId, G_APPLICATION_FLAGS_NONE);
+
+  UI uiInstance = malloc(sizeof(struct _ui));
+  uiInstance->private = uiPrivateInstance;
+
+  return uiInstance;
+}
+
+int
+UI_run(UI uiInstance, int argc, char** argv, const void (*callback)(UI))
+{
+  Private uiPrivateInstance = (Private)uiInstance->private;
+  appOnRunningHandler = callback;
+
+  g_signal_connect(
+    uiPrivateInstance->app, "activate", G_CALLBACK(onAppActivated), uiInstance);
+
+  return g_application_run(G_APPLICATION(uiPrivateInstance->app), argc, argv);
+}
+
+void
+UI_destroy(UI* uiInstance)
+{
+  Private uiPrivateInstance = (Private)((*uiInstance)->private);
+  GtkApplication* app = uiPrivateInstance->app;
+
+  g_object_unref(app);
+  free(uiPrivateInstance);
+  free(*uiInstance);
+  *uiInstance = NULL;
 }
 
 void (*searchButtonCallback)(char*) = NULL;
 
 void
-searchButtonOnClicked(GtkButton* button, gpointer user_data)
+searchButtonOnClicked(GtkButton* button, gpointer userData)
 {
-  GtkSearchEntry* input = (GtkSearchEntry*)user_data;
-  char* searchQuery = gtk_entry_get_text(GTK_ENTRY(input));
+  UI uiInstance = (UI)userData;
+  Private uiPrivateInstance = (Private)uiInstance->private;
+
+  char* searchQuery =
+    gtk_entry_get_text(GTK_ENTRY(uiPrivateInstance->searchInput));
 
   if (searchButtonCallback)
     searchButtonCallback(searchQuery);
 }
 
 void
-UI_onSearchButtonClicked(const UI_Manipulable manipulableWidgets,
-                         const void (*handler)(char*))
+UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(char*))
 {
+  Private uiPrivateInstance = (Private)uiInstance->private;
   searchButtonCallback = handler;
 
-  g_signal_connect(manipulableWidgets->searchButton,
+  g_signal_connect(uiPrivateInstance->searchButton,
                    "clicked",
                    G_CALLBACK(searchButtonOnClicked),
-                   manipulableWidgets->searchInput);
+                   uiInstance);
 }
 
 void (*treeViewCallback)(char*);
 
 void
-treeSelectionOnChanged(GtkTreeSelection* selection, gpointer user_data)
+treeSelectionOnChanged(GtkTreeSelection* selection, gpointer userData)
 {
-  GtkTreeModel* model = (GtkTreeModel*)user_data;
+  UI uiInstance = (UI)userData;
+  Private uiPrivateInstance = (Private)uiInstance->private;
+
+  GtkTreeModel* model =
+    gtk_tree_view_get_model(GTK_TREE_VIEW(uiPrivateInstance->listView));
   GtkTreeIter iter;
   char* word;
 
@@ -371,14 +479,14 @@ treeSelectionOnChanged(GtkTreeSelection* selection, gpointer user_data)
 }
 
 void
-UI_onListViewItemClicked(const UI_Manipulable manipulableWidgets,
-                         const void (*handler)(char*))
+UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(char*))
 {
+  Private uiPrivateInstance = (Private)uiInstance->private;
+
   treeViewCallback = handler;
   GtkTreeSelection* selection =
-    gtk_tree_view_get_selection(GTK_TREE_VIEW(manipulableWidgets->listView));
-  GtkTreeModel* model =
-    gtk_tree_view_get_model(GTK_TREE_VIEW(manipulableWidgets->listView));
+    gtk_tree_view_get_selection(GTK_TREE_VIEW(uiPrivateInstance->listView));
+
   g_signal_connect(
-    selection, "changed", G_CALLBACK(treeSelectionOnChanged), model);
+    selection, "changed", G_CALLBACK(treeSelectionOnChanged), uiInstance);
 }
