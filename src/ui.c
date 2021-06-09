@@ -432,6 +432,28 @@ UI_destroy(UI* uiInstance)
   *uiInstance = NULL;
 }
 
+void
+UI_showDialog(const UI uiInstance, const char* title, const char* message)
+{
+  Private uiPrivateInstance = (Private)uiInstance->private;
+
+  GtkWidget* dialog =
+    gtk_dialog_new_with_buttons(title,
+                                uiPrivateInstance->rootContainer,
+                                GTK_DIALOG_DESTROY_WITH_PARENT,
+                                "OK",
+                                GTK_RESPONSE_NONE,
+                                NULL);
+  GtkWidget* contentArea = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  GtkWidget* label = gtk_label_new(message);
+
+  g_signal_connect_swapped(
+    dialog, "response", G_CALLBACK(gtk_widget_destroy), dialog);
+
+  gtk_container_add(GTK_CONTAINER(contentArea), label);
+  gtk_widget_show_all(dialog);
+}
+
 void (*searchButtonCallback)(char*) = NULL;
 
 void

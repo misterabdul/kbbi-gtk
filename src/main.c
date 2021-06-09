@@ -7,10 +7,13 @@
 #define WINDOW_WIDTH 500
 #define WINDOW_HEIGHT 400
 
+UI ui;
+
 void
 onSearchButtonClicked(char* query)
 {
   printf("%s\n", query);
+  UI_showDialog(ui, "Entah", query);
 }
 
 void
@@ -29,7 +32,7 @@ onAppRunning(UI ui)
 int
 main(int argc, char** argv)
 {
-  UI ui = UI_init(APP_ID, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
+  ui = UI_init(APP_ID, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
 
   int status = UI_run(ui, argc, argv, onAppRunning);
 

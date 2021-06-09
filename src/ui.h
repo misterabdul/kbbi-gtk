@@ -19,6 +19,9 @@ void
 UI_destroy(UI* ui);
 
 void
+UI_showDialog(const UI ui, const char* title, const char* message);
+
+void
 UI_onSearchButtonClicked(const UI ui, const void (*handler)(char*));
 
 void
