@@ -11,13 +11,19 @@
 #define LIB_KBBI_SO_PATH "./libkbbi.so"
 
 void
-onSearchButtonClicked(char* query)
+onDialogResponded(UI ui)
+{
+  UI_stop(ui);
+}
+
+void
+onSearchButtonClicked(UI ui, char* query)
 {
   printf("%s\n", query);
 }
 
 void
-onListViewItemClicked(char* word)
+onListViewItemClicked(UI ui, char* word)
 {
   printf("%s\n", word);
 }
@@ -28,7 +34,7 @@ onAppRunning(UI ui)
   Lib lib = NULL;
   int isLoaded = Lib_load(&lib, LIB_KBBI_SO_PATH);
   if (!isLoaded)
-    UI_showDialog(ui, "Kesalahan", "Tidak dapat memuat file \"libkbbi.so\"");
+    UI_showDialog(ui, "Kesalahan", "Tidak dapat memuat file \"libkbbi.so\"", onDialogResponded);
 
   UI_onListViewItemClicked(ui, onListViewItemClicked);
   UI_onSearchButtonClicked(ui, onSearchButtonClicked);

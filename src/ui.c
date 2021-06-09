@@ -408,6 +408,14 @@ UI_init(const char* appId, const char* title, const int width, const int height)
   return uiInstance;
 }
 
+void
+UI_stop(UI uiInstance)
+{
+  Private uiPrivateInstance = (Private)uiInstance->private;
+
+  g_application_quit(G_APPLICATION(uiPrivateInstance->app));
+}
+
 int
 UI_run(UI uiInstance, int argc, char** argv, const void (*callback)(UI))
 {
@@ -432,10 +440,27 @@ UI_destroy(UI* uiInstance)
   *uiInstance = NULL;
 }
 
+void (*dialogCallback)(UI) = NULL;
+
 void
-UI_showDialog(const UI uiInstance, const char* title, const char* message)
+dialogOnResponse(GtkDialog* dialog, int responseId, gpointer userData)
+{
+  UI uiInstance = (UI)userData;
+
+  if (dialogCallback)
+    dialogCallback(uiInstance);
+
+  gtk_widget_destroy(dialog);
+}
+
+void
+UI_showDialog(const UI uiInstance,
+              const char* title,
+              const char* message,
+              const void (*responseHandler)(UI))
 {
   Private uiPrivateInstance = (Private)uiInstance->private;
+  dialogCallback = responseHandler;
 
   GtkWidget* dialog =
     gtk_dialog_new_with_buttons(title,
@@ -447,14 +472,14 @@ UI_showDialog(const UI uiInstance, const char* title, const char* message)
   GtkWidget* contentArea = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget* label = gtk_label_new(message);
 
-  g_signal_connect_swapped(
-    dialog, "response", G_CALLBACK(gtk_widget_destroy), dialog);
+  g_signal_connect(
+    dialog, "response", G_CALLBACK(dialogOnResponse), uiInstance);
 
   gtk_container_add(GTK_CONTAINER(contentArea), label);
   gtk_widget_show_all(dialog);
 }
 
-void (*searchButtonCallback)(char*) = NULL;
+void (*searchButtonCallback)(UI, char*) = NULL;
 
 void
 searchButtonOnClicked(GtkButton* button, gpointer userData)
@@ -466,11 +491,11 @@ searchButtonOnClicked(GtkButton* button, gpointer userData)
     gtk_entry_get_text(GTK_ENTRY(uiPrivateInstance->searchInput));
 
   if (searchButtonCallback)
-    searchButtonCallback(searchQuery);
+    searchButtonCallback(uiInstance, searchQuery);
 }
 
 void
-UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(char*))
+UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(UI, char*))
 {
   Private uiPrivateInstance = (Private)uiInstance->private;
   searchButtonCallback = handler;
@@ -481,7 +506,7 @@ UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(char*))
                    uiInstance);
 }
 
-void (*treeViewCallback)(char*);
+void (*treeViewCallback)(UI, char*) = NULL;
 
 void
 treeSelectionOnChanged(GtkTreeSelection* selection, gpointer userData)
@@ -497,11 +522,12 @@ treeSelectionOnChanged(GtkTreeSelection* selection, gpointer userData)
   gtk_tree_selection_get_selected(selection, &model, &iter);
   gtk_tree_model_get(model, &iter, 0, &word, -1);
 
-  treeViewCallback(word);
+  if (treeViewCallback)
+    treeViewCallback(uiInstance, word);
 }
 
 void
-UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(char*))
+UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(UI, char*))
 {
   Private uiPrivateInstance = (Private)uiInstance->private;
 

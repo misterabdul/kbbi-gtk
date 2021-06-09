@@ -16,15 +16,21 @@ int
 UI_run(UI ui, int argc, char** argv, const void (*onAppRunning)(UI));
 
 void
+UI_stop(UI ui);
+
+void
 UI_destroy(UI* ui);
 
 void
-UI_showDialog(const UI ui, const char* title, const char* message);
+UI_showDialog(const UI ui,
+              const char* title,
+              const char* message,
+              const void (*responseHandler)(UI));
 
 void
-UI_onSearchButtonClicked(const UI ui, const void (*handler)(char*));
+UI_onSearchButtonClicked(const UI ui, const void (*handler)(UI, char*));
 
 void
-UI_onListViewItemClicked(const UI ui, const void (*handler)(char*));
+UI_onListViewItemClicked(const UI ui, const void (*handler)(UI, char*));
 
 #endif
