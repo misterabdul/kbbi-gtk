@@ -1,7 +1,18 @@
 #include <dlfcn.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "lib.h"
+
+typedef struct _private
+{
+  void* soHandler;
+  Results (*initResult)(void);
+  void (*freeResult)(Results);
+  int (*search)(Results*, int*, char*, int);
+  int (*count)(void);
+  char* (*version)(void);
+} * Private;
 
 int
 Lib_load(Lib* lib, const char* path)
@@ -10,17 +21,112 @@ Lib_load(Lib* lib, const char* path)
   if (!soHandler)
     return 0;
 
+  /* clear any existing eror */
+  dlerror();
+
+  Results (*initResult)(void);
+  void (*freeResult)(Results);
+  int (*search)(Results*, int*, char*, int);
+  int (*count)(void);
+  char* (*version)(void);
+
+  *(void**)(&initResult) = dlsym(soHandler, "init_result");
+  *(void**)(&freeResult) = dlsym(soHandler, "free_result");
+  *(void**)(&search) = dlsym(soHandler, "search");
+  *(void**)(&count) = dlsym(soHandler, "count");
+  *(void**)(&version) = dlsym(soHandler, "version");
+
+  if (dlerror())
+    return 0;
+
+  Private libPrivateInstance = malloc(sizeof(struct _private));
+  libPrivateInstance->soHandler = soHandler;
+  libPrivateInstance->initResult = initResult;
+  libPrivateInstance->freeResult = freeResult;
+  libPrivateInstance->search = search;
+  libPrivateInstance->count = count;
+  libPrivateInstance->version = version;
+
   Lib libInstance = malloc(sizeof(struct _lib));
-  libInstance->private = soHandler;
+  libInstance->results = NULL;
+  libInstance->resultSize = 0;
+  libInstance->private = libPrivateInstance;
   *lib = libInstance;
 
   return 1;
 }
 
 void
-Lib_close(Lib* lib)
+Lib_close(Lib* libInstance)
 {
-  dlclose((*lib)->private);
-  free(*lib);
-  *lib = NULL;
+  if (*libInstance) {
+    Private libPrivateInstance = (Private)(*libInstance)->private;
+
+    if (libPrivateInstance && libPrivateInstance->freeResult) {
+      if ((*libInstance)->results)
+        libPrivateInstance->freeResult((*libInstance)->results);
+
+      if (libPrivateInstance) {
+        dlclose(libPrivateInstance->soHandler);
+
+        free(libPrivateInstance);
+      }
+    }
+
+    free(*libInstance);
+    *libInstance = NULL;
+  }
+}
+
+int
+Lib_search(Lib libInstance, const char* query)
+{
+  int status = 0;
+
+  if (libInstance && query) {
+    Private libPrivateInstance = (Private)libInstance->private;
+
+    if (libPrivateInstance && libPrivateInstance->search &&
+        libPrivateInstance->initResult && libPrivateInstance->freeResult) {
+      Results results = libPrivateInstance->initResult();
+      int resultSize = 0;
+      status =
+        libPrivateInstance->search(&results, &resultSize, query, strlen(query));
+
+      if (libInstance->results)
+        libPrivateInstance->freeResult(libInstance->results);
+      libInstance->results = results;
+      libInstance->resultSize = resultSize;
+    }
+  }
+
+  return status;
+}
+
+int
+Lib_count(Lib libInstance)
+{
+  if (libInstance) {
+    Private libPrivateInstance = (Private)libInstance->private;
+
+    if (libPrivateInstance && libPrivateInstance->count) {
+      return libPrivateInstance->count();
+    }
+  }
+
+  return 0;
+}
+
+char*
+Lib_version(Lib libInstance)
+{
+  if (libInstance) {
+    Private libPrivateInstance = (Private)libInstance->private;
+
+    if (libPrivateInstance && libPrivateInstance->version) {
+      return libPrivateInstance->version();
+    }
+  }
+
+  return NULL;
 }
