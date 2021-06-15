@@ -22,7 +22,7 @@ void
 Lib_close(Lib* lib);
 
 void
-Lib_freeResult(Lib lib);
+Lib_freeResult(Lib* lib);
 
 int
 Lib_search(Lib lib, const char* query);

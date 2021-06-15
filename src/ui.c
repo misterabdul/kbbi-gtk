@@ -224,33 +224,51 @@ UI_init(const char* appId, const char* title, const int width, const int height)
 void
 UI_stop(UI uiInstance)
 {
-  Private uiPrivateInstance = (Private)uiInstance->private;
+  if (uiInstance) {
+    Private uiPrivateInstance = (Private)uiInstance->private;
 
-  g_application_quit(G_APPLICATION(uiPrivateInstance->app));
+    if (uiPrivateInstance && uiPrivateInstance->app)
+      g_application_quit(G_APPLICATION(uiPrivateInstance->app));
+  }
 }
 
 int
 UI_run(UI uiInstance, int argc, char** argv, const void (*callback)(UI))
 {
-  Private uiPrivateInstance = (Private)uiInstance->private;
-  appOnRunningHandler = callback;
+  if (uiInstance) {
+    Private uiPrivateInstance = (Private)uiInstance->private;
 
-  g_signal_connect(
-    uiPrivateInstance->app, "activate", G_CALLBACK(onAppActivated), uiInstance);
+    if (uiPrivateInstance && uiPrivateInstance->app) {
+      appOnRunningHandler = callback;
 
-  return g_application_run(G_APPLICATION(uiPrivateInstance->app), argc, argv);
+      g_signal_connect(uiPrivateInstance->app,
+                       "activate",
+                       G_CALLBACK(onAppActivated),
+                       uiInstance);
+
+      return g_application_run(
+        G_APPLICATION(uiPrivateInstance->app), argc, argv);
+    }
+  }
+
+  return -1;
 }
 
 void
 UI_destroy(UI* uiInstance)
 {
-  Private uiPrivateInstance = (Private)((*uiInstance)->private);
-  GtkApplication* app = uiPrivateInstance->app;
+  if (*uiInstance) {
+    Private uiPrivateInstance = (Private)((*uiInstance)->private);
 
-  g_object_unref(app);
-  free(uiPrivateInstance);
-  free(*uiInstance);
-  *uiInstance = NULL;
+    if (uiPrivateInstance && uiPrivateInstance->app) {
+      GtkApplication* app = uiPrivateInstance->app;
+      g_object_unref(app);
+      free(uiPrivateInstance);
+    }
+
+    free(*uiInstance);
+    *uiInstance = NULL;
+  }
 }
 
 void (*dialogCallback)(UI) = NULL;
@@ -272,24 +290,29 @@ UI_showDialog(const UI uiInstance,
               const char* message,
               const void (*responseHandler)(UI))
 {
-  Private uiPrivateInstance = (Private)uiInstance->private;
-  dialogCallback = responseHandler;
+  if (uiInstance) {
+    Private uiPrivateInstance = (Private)uiInstance->private;
 
-  GtkWidget* dialog =
-    gtk_dialog_new_with_buttons(title,
-                                uiPrivateInstance->rootContainer,
-                                GTK_DIALOG_DESTROY_WITH_PARENT,
-                                "OK",
-                                GTK_RESPONSE_NONE,
-                                NULL);
-  GtkWidget* contentArea = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-  GtkWidget* label = gtk_label_new(message);
+    if (uiPrivateInstance && uiPrivateInstance->rootContainer) {
+      dialogCallback = responseHandler;
 
-  g_signal_connect(
-    dialog, "response", G_CALLBACK(dialogOnResponse), uiInstance);
+      GtkWidget* dialog =
+        gtk_dialog_new_with_buttons(title,
+                                    uiPrivateInstance->rootContainer,
+                                    GTK_DIALOG_DESTROY_WITH_PARENT,
+                                    "OK",
+                                    GTK_RESPONSE_NONE,
+                                    NULL);
+      GtkWidget* contentArea = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+      GtkWidget* label = gtk_label_new(message);
 
-  gtk_container_add(GTK_CONTAINER(contentArea), label);
-  gtk_widget_show_all(dialog);
+      g_signal_connect(
+        dialog, "response", G_CALLBACK(dialogOnResponse), uiInstance);
+
+      gtk_container_add(GTK_CONTAINER(contentArea), label);
+      gtk_widget_show_all(dialog);
+    }
+  }
 }
 
 void (*searchButtonCallback)(UI, char*) = NULL;
@@ -310,13 +333,18 @@ searchButtonOnClicked(GtkButton* button, gpointer userData)
 void
 UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(UI, char*))
 {
-  Private uiPrivateInstance = (Private)uiInstance->private;
-  searchButtonCallback = handler;
+  if (uiInstance) {
+    Private uiPrivateInstance = (Private)uiInstance->private;
 
-  g_signal_connect(uiPrivateInstance->searchButton,
-                   "clicked",
-                   G_CALLBACK(searchButtonOnClicked),
-                   uiInstance);
+    if (uiPrivateInstance && uiPrivateInstance->searchButton) {
+      searchButtonCallback = handler;
+
+      g_signal_connect(uiPrivateInstance->searchButton,
+                       "clicked",
+                       G_CALLBACK(searchButtonOnClicked),
+                       uiInstance);
+    }
+  }
 }
 
 void (*treeViewCallback)(UI, char*, int) = NULL;
@@ -352,54 +380,61 @@ UI_setListViewItems(const UI uiInstance,
                     const char* items[],
                     const int itemSize)
 {
-  if (uiInstance && uiInstance->private) {
+  if (uiInstance) {
     Private uiPrivateInstance = (Private)uiInstance->private;
 
-    enum ListViewColumns
-    {
-      LV_WordColumn,
-      LV_ColumnCount
-    };
+    if (uiPrivateInstance) {
+      enum ListViewColumns
+      {
+        LV_WordColumn,
+        LV_ColumnCount
+      };
 
-    GtkTreeStore* store = gtk_tree_store_new(LV_ColumnCount, G_TYPE_STRING);
-    GtkTreeIter iter;
-    for (int i = 0; i < itemSize; i++) {
-      gtk_tree_store_append(GTK_TREE_STORE(store), &iter, NULL);
-      gtk_tree_store_set(
-        GTK_TREE_STORE(store), &iter, LV_WordColumn, items[i], -1);
+      GtkTreeStore* store = gtk_tree_store_new(LV_ColumnCount, G_TYPE_STRING);
+      GtkTreeIter iter;
+      for (int i = 0; i < itemSize; i++) {
+        gtk_tree_store_append(GTK_TREE_STORE(store), &iter, NULL);
+        gtk_tree_store_set(
+          GTK_TREE_STORE(store), &iter, LV_WordColumn, items[i], -1);
+      }
+
+      GtkTreeSelection* selection =
+        gtk_tree_view_get_selection(GTK_TREE_VIEW(uiPrivateInstance->listView));
+      if (treeViewOnSelectHandlerId)
+        g_signal_handler_disconnect(selection, treeViewOnSelectHandlerId);
+
+      gtk_tree_view_set_model(GTK_TREE_VIEW(uiPrivateInstance->listView),
+                              GTK_TREE_MODEL(store));
+
+      if (treeViewCallback)
+        treeViewOnSelectHandlerId = g_signal_connect(
+          selection, "changed", treeSelectionOnChanged, uiInstance);
+
+      g_object_unref(G_OBJECT(store));
     }
-
-    GtkTreeSelection* selection =
-      gtk_tree_view_get_selection(GTK_TREE_VIEW(uiPrivateInstance->listView));
-    if (treeViewOnSelectHandlerId)
-      g_signal_handler_disconnect(selection, treeViewOnSelectHandlerId);
-
-    gtk_tree_view_set_model(GTK_TREE_VIEW(uiPrivateInstance->listView),
-                            GTK_TREE_MODEL(store));
-
-    if (treeViewCallback)
-      treeViewOnSelectHandlerId = g_signal_connect(
-        selection, "changed", treeSelectionOnChanged, uiInstance);
-
-    g_object_unref(G_OBJECT(store));
   }
 }
 
 void
-UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(UI, char*, int))
+UI_onListViewItemClicked(const UI uiInstance,
+                         const void (*handler)(UI, char*, int))
 {
-  Private uiPrivateInstance = (Private)uiInstance->private;
+  if (uiInstance) {
+    Private uiPrivateInstance = (Private)uiInstance->private;
 
-  treeViewCallback = handler;
-  GtkTreeSelection* selection =
-    gtk_tree_view_get_selection(GTK_TREE_VIEW(uiPrivateInstance->listView));
+    if (uiPrivateInstance && uiPrivateInstance->listView) {
+      treeViewCallback = handler;
+      GtkTreeSelection* selection =
+        gtk_tree_view_get_selection(GTK_TREE_VIEW(uiPrivateInstance->listView));
 
-  if (treeViewCallback) {
-    treeViewOnSelectHandlerId = g_signal_connect(
-      selection, "changed", G_CALLBACK(treeSelectionOnChanged), uiInstance);
-  } else {
-    if (treeViewOnSelectHandlerId)
-      g_signal_handler_disconnect(selection, treeViewOnSelectHandlerId);
+      if (treeViewCallback) {
+        treeViewOnSelectHandlerId = g_signal_connect(
+          selection, "changed", G_CALLBACK(treeSelectionOnChanged), uiInstance);
+      } else {
+        if (treeViewOnSelectHandlerId)
+          g_signal_handler_disconnect(selection, treeViewOnSelectHandlerId);
+      }
+    }
   }
 }
 
@@ -409,7 +444,7 @@ UI_setWebViewContent(const UI uiInstance, const char* html)
   if (uiInstance) {
     Private uiPrivateInstance = (Private)uiInstance->private;
 
-    if (uiPrivateInstance) {
+    if (uiPrivateInstance && uiPrivateInstance->webView) {
       webkit_web_view_load_html(
         WEBKIT_WEB_VIEW(uiPrivateInstance->webView), html, NULL);
     }

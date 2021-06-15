@@ -70,10 +70,13 @@ freeResult(Results result)
 }
 
 void
-Lib_freeResult(Lib libInstance)
+Lib_freeResult(Lib *libInstance)
 {
-  if (libInstance)
-    freeResult(libInstance->results);
+  if (*libInstance)
+    freeResult((*libInstance)->results);
+
+  (*libInstance)->results = NULL;
+  (*libInstance)->resultSize = 0;
 }
 
 void

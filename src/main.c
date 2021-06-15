@@ -56,6 +56,8 @@ onSearchButtonClicked(UI ui, char* query)
     if (resultMeans)
       free(resultMeans);
     resultMeans = means;
+
+    Lib_freeResult(&lib);
   }
 }
 
@@ -86,12 +88,11 @@ main(int argc, char** argv)
 
   int status = UI_run(ui, argc, argv, onAppRunning);
 
-  if (lib) {
-    Lib_freeResult(lib);
-    Lib_close(lib);
-  }
+  if (lib)
+    Lib_close(&lib);
 
-  UI_destroy(&ui);
+  if (ui)
+    UI_destroy(&ui);
 
   return status;
 }
