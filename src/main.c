@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "lib.h"
 #include "ui.h"
@@ -11,6 +13,8 @@
 #define LIB_KBBI_SO_PATH "./libkbbi.so"
 
 Lib lib = NULL;
+char** resultWords = NULL;
+char** resultMeans = NULL;
 
 void
 onDialogResponded(UI ui)
@@ -22,7 +26,35 @@ void
 onSearchButtonClicked(UI ui, char* query)
 {
   int found = Lib_search(lib, query);
-  printf("%s => %s\n", query, found ? "found" : "not found");
+
+  if (found && lib->results) {
+    char** words = malloc(lib->resultSize * sizeof(char*));
+    char** means = malloc(lib->resultSize * sizeof(char*));
+
+    Results results = lib->results;
+    for (int i = 0; i < lib->resultSize; i++) {
+      if (!results)
+        break;
+
+      if (results->katakunci)
+        words[i] = results->katakunci;
+
+      if (results->artikata)
+        means[i] = results->artikata;
+
+      results = results->next;
+    }
+
+    UI_setListViewItems(ui, words, lib->resultSize);
+
+    if (resultWords)
+      free(resultWords);
+    resultWords = words;
+
+    if (resultMeans)
+      free(resultMeans);
+    resultMeans = means;
+  }
 }
 
 void
@@ -52,8 +84,10 @@ main(int argc, char** argv)
 
   int status = UI_run(ui, argc, argv, onAppRunning);
 
-  if(lib)
+  if (lib) {
+    Lib_freeResult(lib);
     Lib_close(lib);
+  }
 
   UI_destroy(&ui);
 
