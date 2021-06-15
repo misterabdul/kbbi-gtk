@@ -31,6 +31,9 @@ void
 UI_onSearchButtonClicked(const UI ui, const void (*handler)(UI, char*));
 
 void
+UI_setListViewItems(const UI ui, const char* items[], const int itemSize);
+
+void
 UI_onListViewItemClicked(const UI ui, const void (*handler)(UI, char*));
 
 #endif

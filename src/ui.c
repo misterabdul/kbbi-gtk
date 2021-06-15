@@ -507,6 +507,7 @@ UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(UI, char*))
 }
 
 void (*treeViewCallback)(UI, char*) = NULL;
+gulong treeViewOnSelectHandlerId = 0;
 
 void
 treeSelectionOnChanged(GtkTreeSelection* selection, gpointer userData)
@@ -517,13 +518,53 @@ treeSelectionOnChanged(GtkTreeSelection* selection, gpointer userData)
   GtkTreeModel* model =
     gtk_tree_view_get_model(GTK_TREE_VIEW(uiPrivateInstance->listView));
   GtkTreeIter iter;
-  char* word;
+  char* word = NULL;
 
-  gtk_tree_selection_get_selected(selection, &model, &iter);
-  gtk_tree_model_get(model, &iter, 0, &word, -1);
+  if (model) {
+    gtk_tree_selection_get_selected(selection, &model, &iter);
+    gtk_tree_model_get(model, &iter, 0, &word, -1);
+  }
 
   if (treeViewCallback)
     treeViewCallback(uiInstance, word);
+}
+
+void
+UI_setListViewItems(const UI uiInstance,
+                    const char* items[],
+                    const int itemSize)
+{
+  if (uiInstance && uiInstance->private) {
+    Private uiPrivateInstance = (Private)uiInstance->private;
+
+    enum ListViewColumns
+    {
+      LV_WordColumn,
+      LV_ColumnCount
+    };
+
+    GtkTreeStore* store = gtk_tree_store_new(LV_ColumnCount, G_TYPE_STRING);
+    GtkTreeIter iter;
+    for (int i = 0; i < itemSize; i++) {
+      gtk_tree_store_append(GTK_TREE_STORE(store), &iter, NULL);
+      gtk_tree_store_set(
+        GTK_TREE_STORE(store), &iter, LV_WordColumn, items[i], -1);
+    }
+
+    GtkTreeSelection* selection =
+      gtk_tree_view_get_selection(GTK_TREE_VIEW(uiPrivateInstance->listView));
+    if (treeViewOnSelectHandlerId)
+      g_signal_handler_disconnect(selection, treeViewOnSelectHandlerId);
+
+    gtk_tree_view_set_model(GTK_TREE_VIEW(uiPrivateInstance->listView),
+                            GTK_TREE_MODEL(store));
+
+    if (treeViewCallback)
+      treeViewOnSelectHandlerId = g_signal_connect(
+        selection, "changed", treeSelectionOnChanged, uiInstance);
+
+    g_object_unref(G_OBJECT(store));
+  }
 }
 
 void
@@ -535,6 +576,11 @@ UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(UI, char*))
   GtkTreeSelection* selection =
     gtk_tree_view_get_selection(GTK_TREE_VIEW(uiPrivateInstance->listView));
 
-  g_signal_connect(
-    selection, "changed", G_CALLBACK(treeSelectionOnChanged), uiInstance);
+  if (treeViewCallback) {
+    treeViewOnSelectHandlerId = g_signal_connect(
+      selection, "changed", G_CALLBACK(treeSelectionOnChanged), uiInstance);
+  } else {
+    if (treeViewOnSelectHandlerId)
+      g_signal_handler_disconnect(selection, treeViewOnSelectHandlerId);
+  }
 }
