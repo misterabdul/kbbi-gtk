@@ -57,25 +57,39 @@ Lib_load(Lib* lib, const char* path)
 }
 
 void
+freeResult(Results result)
+{
+  if (result) {
+    // if (result->artikata)
+    //   free(result->artikata);
+    // if (result->katakunci)
+    //   free(result->katakunci);
+    freeResult(result->next);
+    free(result);
+  }
+}
+
+void
+Lib_freeResult(Lib libInstance)
+{
+  if (libInstance)
+    freeResult(libInstance->results);
+}
+
+void
 Lib_close(Lib* libInstance)
 {
   if (*libInstance) {
     Private libPrivateInstance = (Private)(*libInstance)->private;
 
-    if (libPrivateInstance && libPrivateInstance->freeResult) {
-      if ((*libInstance)->results)
-        libPrivateInstance->freeResult((*libInstance)->results);
-
-      if (libPrivateInstance) {
-        dlclose(libPrivateInstance->soHandler);
-
-        free(libPrivateInstance);
-      }
+    if (libPrivateInstance && libPrivateInstance->soHandler) {
+      dlclose(libPrivateInstance->soHandler);
+      free(libPrivateInstance);
     }
-
-    free(*libInstance);
-    *libInstance = NULL;
   }
+
+  free(*libInstance);
+  *libInstance = NULL;
 }
 
 int
