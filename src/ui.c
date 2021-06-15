@@ -319,7 +319,7 @@ UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(UI, char*))
                    uiInstance);
 }
 
-void (*treeViewCallback)(UI, char*) = NULL;
+void (*treeViewCallback)(UI, char*, int) = NULL;
 gulong treeViewOnSelectHandlerId = 0;
 
 void
@@ -332,14 +332,19 @@ treeSelectionOnChanged(GtkTreeSelection* selection, gpointer userData)
     gtk_tree_view_get_model(GTK_TREE_VIEW(uiPrivateInstance->listView));
   GtkTreeIter iter;
   char* word = NULL;
+  int index = -1;
 
   if (model) {
     gtk_tree_selection_get_selected(selection, &model, &iter);
     gtk_tree_model_get(model, &iter, 0, &word, -1);
+    GtkTreePath* path = gtk_tree_model_get_path(model, &iter);
+    int* indices = gtk_tree_path_get_indices(path);
+    index = indices[0];
+    gtk_tree_path_free(path);
   }
 
   if (treeViewCallback)
-    treeViewCallback(uiInstance, word);
+    treeViewCallback(uiInstance, word, index);
 }
 
 void
@@ -381,7 +386,7 @@ UI_setListViewItems(const UI uiInstance,
 }
 
 void
-UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(UI, char*))
+UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(UI, char*, int))
 {
   Private uiPrivateInstance = (Private)uiInstance->private;
 
@@ -395,5 +400,18 @@ UI_onListViewItemClicked(const UI uiInstance, const void (*handler)(UI, char*))
   } else {
     if (treeViewOnSelectHandlerId)
       g_signal_handler_disconnect(selection, treeViewOnSelectHandlerId);
+  }
+}
+
+void
+UI_setWebViewContent(const UI uiInstance, const char* html)
+{
+  if (uiInstance) {
+    Private uiPrivateInstance = (Private)uiInstance->private;
+
+    if (uiPrivateInstance) {
+      webkit_web_view_load_html(
+        WEBKIT_WEB_VIEW(uiPrivateInstance->webView), html, NULL);
+    }
   }
 }

@@ -25,6 +25,8 @@ onDialogResponded(UI ui)
 void
 onSearchButtonClicked(UI ui, char* query)
 {
+  UI_setWebViewContent(ui, "<div></div>");
+
   int found = Lib_search(lib, query);
 
   if (found && lib->results) {
@@ -58,9 +60,9 @@ onSearchButtonClicked(UI ui, char* query)
 }
 
 void
-onListViewItemClicked(UI ui, char* word)
+onListViewItemClicked(UI ui, char* word, int index)
 {
-  printf("%s\n", word);
+  UI_setWebViewContent(ui, resultMeans[index]);
 }
 
 void

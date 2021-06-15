@@ -34,6 +34,9 @@ void
 UI_setListViewItems(const UI ui, const char* items[], const int itemSize);
 
 void
-UI_onListViewItemClicked(const UI ui, const void (*handler)(UI, char*));
+UI_onListViewItemClicked(const UI ui, const void (*handler)(UI, char*, int));
+
+void
+UI_setWebViewContent(const UI ui, const char* html);
 
 #endif
