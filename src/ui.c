@@ -60,7 +60,12 @@ initGridContainer(void)
 {
   GtkWidget* gridContainer = gtk_grid_new();
   gtk_grid_insert_column(GTK_GRID(gridContainer), 1);
+  gtk_grid_insert_column(GTK_GRID(gridContainer), 1);
+  gtk_grid_insert_column(GTK_GRID(gridContainer), 1);
+  gtk_grid_insert_column(GTK_GRID(gridContainer), 1);
+  gtk_grid_insert_column(GTK_GRID(gridContainer), 1);
   gtk_grid_insert_row(GTK_GRID(gridContainer), 1);
+  gtk_grid_set_column_homogeneous(GTK_GRID(gridContainer), FALSE);
 
   return gridContainer;
 }
@@ -227,7 +232,7 @@ onAppActivated(GtkApplication* app, gpointer userData)
                   uiPrivateInstance->searchContainer,
                   0,
                   0,
-                  2,
+                  6,
                   1);
   gtk_grid_attach(GTK_GRID(uiPrivateInstance->gridContainer),
                   uiPrivateInstance->scrollContainer,
@@ -239,7 +244,7 @@ onAppActivated(GtkApplication* app, gpointer userData)
                   uiPrivateInstance->webView,
                   1,
                   1,
-                  1,
+                  5,
                   1);
 
   gtk_container_add(GTK_CONTAINER(uiPrivateInstance->rootContainer),
