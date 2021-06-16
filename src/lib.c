@@ -4,6 +4,9 @@
 
 #include "lib.h"
 
+/**
+ * The Lib's private data struct.
+ */
 typedef struct _private
 {
   void* soHandler;
@@ -56,6 +59,11 @@ Lib_load(Lib* lib, const char* path)
   return 1;
 }
 
+/**
+ * Custom function to free the result recursively.
+ *
+ * @param[in] result
+ */
 void
 freeResult(Results result)
 {
@@ -70,7 +78,7 @@ freeResult(Results result)
 }
 
 void
-Lib_freeResult(Lib *libInstance)
+Lib_freeResult(Lib* libInstance)
 {
   if (*libInstance)
     freeResult((*libInstance)->results);

@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "lib.h"
 #include "ui.h"
@@ -12,16 +10,38 @@
 
 #define LIB_KBBI_SO_PATH "./libkbbi.so"
 
+/**
+ * The lib instance.
+ */
 Lib lib = NULL;
+
+/**
+ * Result words array.
+ */
 char** resultWords = NULL;
+
+/**
+ * Result word meanings array.
+ */
 char** resultMeans = NULL;
 
+/**
+ * On error dialog responded function handler.
+ *
+ * @param[in] ui
+ */
 void
 onDialogResponded(UI ui)
 {
   UI_stop(ui);
 }
 
+/**
+ * On search button clicked function handler.
+ *
+ * @param[in] ui
+ * @param[in] query
+ */
 void
 onSearchButtonClicked(UI ui, char* query)
 {
@@ -61,12 +81,24 @@ onSearchButtonClicked(UI ui, char* query)
   }
 }
 
+/**
+ * On ListView's item clicked function handler.
+ *
+ * @param[in] ui
+ * @param[in] word
+ * @param[in] index
+ */
 void
 onListViewItemClicked(UI ui, char* word, int index)
 {
   UI_setWebViewContent(ui, resultMeans[index]);
 }
 
+/**
+ * On app running function handler.
+ *
+ * @param[in] ui
+ */
 void
 onAppRunning(UI ui)
 {
@@ -81,6 +113,13 @@ onAppRunning(UI ui)
   UI_onSearchButtonClicked(ui, onSearchButtonClicked);
 }
 
+/**
+ * Application main entry function.
+ *
+ * @param[in] argc
+ * @param[in] argv
+ * @return
+ */
 int
 main(int argc, char** argv)
 {

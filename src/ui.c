@@ -4,6 +4,9 @@
 
 #include "ui.h"
 
+/**
+ * The UI's private data struct.
+ */
 typedef struct _private
 {
   char* appId;
@@ -24,6 +27,15 @@ typedef struct _private
   GtkWidget* webView;
 } * Private;
 
+/**
+ * Create & initialize root container.
+ *
+ * @param[in] app
+ * @param[in] title
+ * @param[in] width
+ * @param[in] height
+ * @return
+ */
 GtkWidget*
 initRootContainer(const GtkApplication* app,
                   const char* title,
@@ -38,6 +50,11 @@ initRootContainer(const GtkApplication* app,
   return rootContainer;
 }
 
+/**
+ * Create & initialize grid container.
+ *
+ * @return
+ */
 GtkWidget*
 initGridContainer(void)
 {
@@ -48,6 +65,11 @@ initGridContainer(void)
   return gridContainer;
 }
 
+/**
+ * Create & initialize search container.
+ *
+ * @return
+ */
 GtkWidget*
 initSearchContainer(void)
 {
@@ -57,6 +79,11 @@ initSearchContainer(void)
   return searchContainer;
 }
 
+/**
+ * Create & initialize scroll container.
+ *
+ * @return
+ */
 GtkWidget*
 initScrollContainer(void)
 {
@@ -66,6 +93,11 @@ initScrollContainer(void)
   return scrolledWindowContainer;
 }
 
+/**
+ * Create & initialize search input widget.
+ *
+ * @return
+ */
 GtkWidget*
 initSearchInput(void)
 {
@@ -76,6 +108,11 @@ initSearchInput(void)
   return searchInput;
 }
 
+/**
+ * Create & initialize search button widget.
+ *
+ * @return
+ */
 GtkWidget*
 initSearchButton(void)
 {
@@ -85,6 +122,11 @@ initSearchButton(void)
   return searchButton;
 }
 
+/**
+ * Create & initialize ListView widget.
+ *
+ * @return
+ */
 GtkWidget*
 initListView(void)
 {
@@ -116,6 +158,11 @@ initListView(void)
   return tree;
 }
 
+/**
+ * Create & initialize WebView widget.
+ *
+ * @return
+ */
 GtkWidget*
 initWebView()
 {
@@ -128,8 +175,17 @@ initWebView()
   return webView;
 }
 
+/**
+ * The app running handler function.
+ */
 void (*appOnRunningHandler)(UI);
 
+/**
+ * Handler function when application's activated.
+ *
+ * @param[in] app
+ * @param[in] userData
+ */
 void
 onAppActivated(GtkApplication* app, gpointer userData)
 {
@@ -271,8 +327,18 @@ UI_destroy(UI* uiInstance)
   }
 }
 
+/**
+ * Dialog callback handler function.
+ */
 void (*dialogCallback)(UI) = NULL;
 
+/**
+ * Handler function for dialog on response signal.
+ *
+ * @param[in] dialog
+ * @param[in] responseId
+ * @param[in] userData
+ */
 void
 dialogOnResponse(GtkDialog* dialog, int responseId, gpointer userData)
 {
@@ -315,8 +381,17 @@ UI_showDialog(const UI uiInstance,
   }
 }
 
+/**
+ * Search button callback function.
+ */
 void (*searchButtonCallback)(UI, char*) = NULL;
 
+/**
+ * Handler function for search button's clicked signal.
+ *
+ * @param[in] button
+ * @param[in] userData
+ */
 void
 searchButtonOnClicked(GtkButton* button, gpointer userData)
 {
@@ -347,9 +422,22 @@ UI_onSearchButtonClicked(const UI uiInstance, const void (*handler)(UI, char*))
   }
 }
 
+/**
+ * ListView item clicked callback function.
+ */
 void (*treeViewCallback)(UI, char*, int) = NULL;
+
+/**
+ * ListView's handler id for item selection changed signal handler function.
+ */
 gulong treeViewOnSelectHandlerId = 0;
 
+/**
+ * Handler function for ListView's selection on changed signal.
+ *
+ * @param[in] selection
+ * @param[in] userData
+ */
 void
 treeSelectionOnChanged(GtkTreeSelection* selection, gpointer userData)
 {
