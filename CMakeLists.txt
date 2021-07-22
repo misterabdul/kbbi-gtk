@@ -66,3 +66,22 @@ endif()
 set(CMAKE_C_FLAGS "-Wall -Wextra -fvisibility=hidden")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
+
+# Install the file
+install(
+	TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Expand uninstall script
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake"
+    IMMEDIATE @ONLY
+)
+
+# Add uninstall target
+add_custom_target(
+	uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake
+)
