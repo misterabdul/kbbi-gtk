@@ -1,3 +1,0 @@
-[submodule "lib/libkbbi"]
-	path = lib/libkbbi
-	url = git@github.com:misterabdul/libkbbi.git

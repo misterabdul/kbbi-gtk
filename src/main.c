@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <string.h>
 
-#include "lib.h"
+#include <libkbbi/libkbbi.h>
+
 #include "ui.h"
 
 #define APP_ID "io.github.misterabdul.kbbi-gtk"
@@ -8,12 +10,7 @@
 #define WINDOW_WIDTH 500
 #define WINDOW_HEIGHT 400
 
-#define LIB_KBBI_SO_PATH "./libkbbi.so"
-
-/**
- * The lib instance.
- */
-Lib lib = NULL;
+KBBI_Results results = NULL;
 
 /**
  * Result words array.
@@ -45,39 +42,43 @@ onDialogResponded(UI ui)
 void
 onSearchButtonClicked(UI ui, char* query)
 {
-  UI_setWebViewContent(ui, "<div></div>");
+  if (strlen(query) > 0) {
+    UI_setWebViewContent(ui, "<div></div>");
 
-  int found = Lib_search(lib, query);
+    if (!results)
+      results = KBBI_resultInit();
 
-  if (found && lib->results) {
-    char** words = malloc(lib->resultSize * sizeof(char*));
-    char** means = malloc(lib->resultSize * sizeof(char*));
+    int resultSize = 0;
+    int found = KBBI_search(&results, &resultSize, query, strlen(query));
 
-    Results results = lib->results;
-    for (int i = 0; i < lib->resultSize; i++) {
-      if (!results)
-        break;
+    if (found && results) {
+      char** words = malloc(resultSize * sizeof(char*));
+      char** means = malloc(resultSize * sizeof(char*));
 
-      if (results->katakunci)
-        words[i] = results->katakunci;
+      KBBI_Results resultNode = results;
+      for (int i = 0; i < resultSize; i++) {
+        if (!resultNode)
+          break;
 
-      if (results->artikata)
-        means[i] = results->artikata;
+        if (resultNode->katakunci)
+          words[i] = resultNode->katakunci;
 
-      results = results->next;
+        if (resultNode->artikata)
+          means[i] = resultNode->artikata;
+
+        resultNode = resultNode->next;
+      }
+
+      UI_setListViewItems(ui, words, resultSize);
+
+      if (resultWords)
+        free(resultWords);
+      resultWords = words;
+
+      if (resultMeans)
+        free(resultMeans);
+      resultMeans = means;
     }
-
-    UI_setListViewItems(ui, words, lib->resultSize);
-
-    if (resultWords)
-      free(resultWords);
-    resultWords = words;
-
-    if (resultMeans)
-      free(resultMeans);
-    resultMeans = means;
-
-    Lib_freeResult(&lib);
   }
 }
 
@@ -102,13 +103,6 @@ onListViewItemClicked(UI ui, char* word, int index)
 void
 onAppRunning(UI ui)
 {
-  int isLoaded = Lib_load(&lib, LIB_KBBI_SO_PATH);
-  if (!isLoaded)
-    UI_showDialog(ui,
-                  "Kesalahan",
-                  "Tidak dapat memuat file \"libkbbi.so\"",
-                  onDialogResponded);
-
   UI_onListViewItemClicked(ui, onListViewItemClicked);
   UI_onSearchButtonClicked(ui, onSearchButtonClicked);
 }
@@ -127,11 +121,15 @@ main(int argc, char** argv)
 
   int status = UI_run(ui, argc, argv, onAppRunning);
 
-  if (lib)
-    Lib_close(&lib);
-
   if (ui)
     UI_destroy(&ui);
+
+  if (results)
+    KBBI_resultFree(results);
+  if (resultWords)
+    free(resultWords);
+  if (resultMeans)
+    free(resultMeans);
 
   return status;
 }
