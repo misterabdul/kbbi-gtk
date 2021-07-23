@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=@DESKTOP_NAME@
+Exec=@DESKTOP_EXEC@
+Icon=@DESKTOP_ICON_REF@
+Categories=Utility;
