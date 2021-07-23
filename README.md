@@ -8,6 +8,7 @@ This is my hobby project to learn more about C programming, widget programming u
 
 ## Todo
 
+- [ ] AppImage packaging
 - [ ] Unit testing with CMake (?)
 
 ## Building
