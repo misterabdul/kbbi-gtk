@@ -23,4 +23,10 @@ $ cmake ..
 # Run make to start building
 $ make
 
+# Optional: run install script to install the apps
+$ sudo make install
+
+# Optional: run uninstall script to uninstall the apps
+$ sudo make uninstall
+
 ```

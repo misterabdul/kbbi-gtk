@@ -67,10 +67,35 @@ set(CMAKE_C_FLAGS "-Wall -Wextra -fvisibility=hidden")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
+set(DESKTOP_PATH "share/applications/")
+set(DESKTOP_ICON_PATH "share/icons/hicolor/128x128/apps")
+set(DESKTOP_NAME "KBBI Offline")
+set(DESKTOP_EXEC ${PROJECT_NAME})
+set(DESKTOP_ICON_REF "${CMAKE_INSTALL_PREFIX}/${DESKTOP_ICON_PATH}/${PROJECT_NAME}.png")
+
+configure_file(
+	"${CMAKE_CURRENT_SOURCE_DIR}/application.desktop.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.desktop"
+	@ONLY
+)
+configure_file(
+	"${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/icon.png"
+	"${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.png"
+	COPYONLY
+)
+
 # Install the file
 install(
 	TARGETS ${PROJECT_NAME}
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(
+	FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.desktop
+	DESTINATION ${DESKTOP_PATH}
+)
+install(
+	FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.png
+	DESTINATION ${DESKTOP_ICON_PATH}
 )
 
 # Expand uninstall script
